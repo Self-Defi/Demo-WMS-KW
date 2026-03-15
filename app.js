@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v7";
+const STORAGE_KEY = "kw_wms_inventory_v8";
 
 const defaultInventory = [
   {
@@ -156,6 +156,7 @@ function resetInventory() {
   }
 
   hideItemCard();
+  closeRackModal();
   renderInventory();
 }
 
@@ -196,6 +197,26 @@ function getStatusBadge(status) {
   return `<span class="badge ${status}">${getStatusLabel(status)}</span>`;
 }
 
+function parseLocationParts(location) {
+  const text = String(location || "").trim();
+  const match = text.match(/^(\d{3})-(\d{2})([A-Za-z])$/);
+  if (!match) {
+    return {
+      rack: "",
+      shelf: "",
+      side: "",
+      full: text
+    };
+  }
+
+  return {
+    rack: match[1],
+    shelf: match[2],
+    side: match[3].toUpperCase(),
+    full: text
+  };
+}
+
 function getFilteredInventory() {
   if (!searchValue.trim()) return inventory;
 
@@ -204,6 +225,11 @@ function getFilteredInventory() {
   return inventory.filter((row) => {
     if (searchType === "itemId") {
       return String(row.itemId || "").toLowerCase().includes(value);
+    }
+
+    if (searchType === "rack") {
+      const parts = parseLocationParts(row.location);
+      return String(parts.rack || "").toLowerCase().includes(value);
     }
 
     return String(row.location || "").toLowerCase().includes(value);
@@ -240,6 +266,91 @@ function hideItemCard() {
 function openItemCardByIndex(index) {
   if (!inventory[index]) return;
   showItemCard(inventory[index]);
+  closeRackModal();
+}
+
+function buildRackItems(rackCode) {
+  return inventory
+    .filter((row) => parseLocationParts(row.location).rack === String(rackCode))
+    .sort((a, b) => {
+      const aParts = parseLocationParts(a.location);
+      const bParts = parseLocationParts(b.location);
+
+      if (aParts.shelf !== bParts.shelf) {
+        return aParts.shelf.localeCompare(bParts.shelf);
+      }
+      return aParts.side.localeCompare(bParts.side);
+    });
+}
+
+function openRackModal(rackCode) {
+  const modal = document.getElementById("rackModal");
+  const title = document.getElementById("rackModalTitle");
+  const subtitle = document.getElementById("rackModalSubtitle");
+  const summary = document.getElementById("rackSummary");
+  const body = document.getElementById("rackItemsBody");
+
+  if (!modal || !title || !subtitle || !summary || !body) return;
+
+  const rackItems = buildRackItems(rackCode);
+
+  title.textContent = `Rack ${rackCode}`;
+  subtitle.textContent = "Items currently assigned to this rack";
+
+  summary.innerHTML = "";
+  body.innerHTML = "";
+
+  const totalItems = rackItems.length;
+  const totalQty = rackItems.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
+
+  [
+    `Rack: ${rackCode}`,
+    `Records: ${totalItems}`,
+    `Total Qty: ${totalQty}`
+  ].forEach((text) => {
+    const chip = document.createElement("div");
+    chip.className = "summary-chip";
+    chip.textContent = text;
+    summary.appendChild(chip);
+  });
+
+  if (rackItems.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="5">No items currently assigned to this rack.</td>`;
+    body.appendChild(tr);
+  } else {
+    rackItems.forEach((row) => {
+      const parts = parseLocationParts(row.location);
+      const realIndex = inventory.findIndex((item) => item.itemId === row.itemId);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <button
+            type="button"
+            class="rack-item-button"
+            onclick="openItemCardByIndex(${realIndex})"
+          >
+            ${escapeHtml(row.itemId)}
+          </button>
+        </td>
+        <td>${escapeHtml(row.item)}</td>
+        <td>${escapeHtml(parts.shelf)}</td>
+        <td>${escapeHtml(parts.side)}</td>
+        <td>${escapeHtml(parts.full)}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function closeRackModal() {
+  const modal = document.getElementById("rackModal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
 function updateItemCardForSearch(filteredInventory) {
@@ -252,14 +363,27 @@ function updateItemCardForSearch(filteredInventory) {
     return;
   }
 
+  if (searchType === "rack" && searchValue.trim()) {
+    hideItemCard();
+    openRackModal(searchValue.trim());
+    return;
+  }
+
   const params = new URLSearchParams(window.location.search);
   if (params.get("itemId") && filteredInventory.length > 0) {
     showItemCard(filteredInventory[0]);
     return;
   }
 
+  if (params.get("rack") && searchValue.trim()) {
+    hideItemCard();
+    openRackModal(searchValue.trim());
+    return;
+  }
+
   if (!searchValue.trim()) {
     hideItemCard();
+    closeRackModal();
   }
 }
 
@@ -423,15 +547,22 @@ function updateSearchPlaceholder() {
 
   if (searchType === "itemId") {
     input.placeholder = "Search Item ID (ex: WH000001 or WH000004)";
-  } else {
-    input.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
+    return;
   }
+
+  if (searchType === "rack") {
+    input.placeholder = "Search rack code (ex: 100, 200, 300)";
+    return;
+  }
+
+  input.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
 }
 
 function applyLookupFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const itemId = params.get("itemId");
   const location = params.get("location");
+  const rack = params.get("rack");
 
   const searchTypeEl = document.getElementById("searchType");
   const searchValueEl = document.getElementById("searchValue");
@@ -443,6 +574,16 @@ function applyLookupFromUrl() {
     if (searchTypeEl) searchTypeEl.value = "itemId";
     updateSearchPlaceholder();
     if (searchValueEl) searchValueEl.value = itemId;
+    return;
+  }
+
+  if (rack) {
+    searchType = "rack";
+    searchValue = rack;
+
+    if (searchTypeEl) searchTypeEl.value = "rack";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = rack;
     return;
   }
 
@@ -473,6 +614,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetBtn = document.getElementById("resetBtn");
   const searchTypeEl = document.getElementById("searchType");
   const searchValueEl = document.getElementById("searchValue");
+  const closeRackModalBtn = document.getElementById("closeRackModalBtn");
+  const rackModalBackdrop = document.getElementById("rackModalBackdrop");
 
   if (addRowBtn) {
     addRowBtn.addEventListener("click", addRow);
@@ -497,9 +640,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (closeRackModalBtn) {
+    closeRackModalBtn.addEventListener("click", closeRackModal);
+  }
+
+  if (rackModalBackdrop) {
+    rackModalBackdrop.addEventListener("click", closeRackModal);
+  }
+
   updateSearchPlaceholder();
   applyLookupFromUrl();
   renderInventory();
 });
 
 window.openItemCardByIndex = openItemCardByIndex;
+window.closeRackModal = closeRackModal;
