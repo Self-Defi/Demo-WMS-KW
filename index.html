@@ -27,13 +27,25 @@
     </section>
 
     <section class="search-section">
-      <div class="search-box">
-        <label for="locationSearch">Rack / Location Search</label>
-        <input
-          type="text"
-          id="locationSearch"
-          placeholder="Search rack location (ex: 200-02A or 300-02A)"
-        />
+      <label class="search-title" for="searchValue">Search Inventory</label>
+
+      <div class="search-controls">
+        <div class="search-mode">
+          <label for="searchType">Search By</label>
+          <select id="searchType">
+            <option value="location">Location</option>
+            <option value="itemId">Item ID</option>
+          </select>
+        </div>
+
+        <div class="search-box">
+          <label for="searchValue">Search Value</label>
+          <input
+            type="text"
+            id="searchValue"
+            placeholder="Search rack location (ex: 200-02A or 300-02A)"
+          />
+        </div>
       </div>
     </section>
 
