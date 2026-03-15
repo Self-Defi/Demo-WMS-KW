@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v6";
+const STORAGE_KEY = "kw_wms_inventory_v7";
 
 const defaultInventory = [
   {
@@ -237,6 +237,11 @@ function hideItemCard() {
   }
 }
 
+function openItemCardByIndex(index) {
+  if (!inventory[index]) return;
+  showItemCard(inventory[index]);
+}
+
 function updateItemCardForSearch(filteredInventory) {
   if (searchType === "itemId" && searchValue.trim()) {
     if (filteredInventory.length > 0) {
@@ -253,7 +258,9 @@ function updateItemCardForSearch(filteredInventory) {
     return;
   }
 
-  hideItemCard();
+  if (!searchValue.trim()) {
+    hideItemCard();
+  }
 }
 
 function renderInventory() {
@@ -279,11 +286,13 @@ function renderInventory() {
 
     tr.innerHTML = `
       <td>
-        <input
-          type="text"
-          value="${escapeHtml(row.project)}"
-          onchange="updateField(${realIndex}, 'project', this.value)"
-        />
+        <button
+          type="button"
+          class="project-button"
+          onclick="openItemCardByIndex(${realIndex})"
+        >
+          ${escapeHtml(row.project)}
+        </button>
       </td>
 
       <td>
@@ -492,3 +501,5 @@ document.addEventListener("DOMContentLoaded", () => {
   applyLookupFromUrl();
   renderInventory();
 });
+
+window.openItemCardByIndex = openItemCardByIndex;
