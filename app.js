@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v5";
+const STORAGE_KEY = "kw_wms_inventory_v6";
 
 const defaultInventory = [
   {
@@ -155,6 +155,7 @@ function resetInventory() {
     searchValueEl.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
   }
 
+  hideItemCard();
   renderInventory();
 }
 
@@ -181,15 +182,18 @@ function generateItemId() {
   return `WH${padWarehouseId(nextNumber)}`;
 }
 
-function getStatusBadge(status) {
+function getStatusLabel(status) {
   const labelMap = {
     received: "Received",
     hold: "Hold",
     delivered: "Delivered",
     inspection: "Inspection"
   };
+  return labelMap[status] || status;
+}
 
-  return `<span class="badge ${status}">${labelMap[status] || status}</span>`;
+function getStatusBadge(status) {
+  return `<span class="badge ${status}">${getStatusLabel(status)}</span>`;
 }
 
 function getFilteredInventory() {
@@ -206,6 +210,52 @@ function getFilteredInventory() {
   });
 }
 
+function showItemCard(row) {
+  const section = document.getElementById("itemCardSection");
+  if (!section || !row) return;
+
+  document.getElementById("detailItemName").textContent = row.item || "Unnamed Item";
+  document.getElementById("detailItemId").textContent = row.itemId || "";
+  document.getElementById("detailProject").textContent = row.project || "";
+  document.getElementById("detailQuantity").textContent = String(row.quantity ?? "");
+  document.getElementById("detailLocation").textContent = row.location || "";
+  document.getElementById("detailDate").textContent = formatDisplayDate(row.date);
+  document.getElementById("detailNotes").textContent = row.notes || "";
+  document.getElementById("detailDamage").textContent = row.damage || "";
+
+  const badge = document.getElementById("detailStatusBadge");
+  badge.className = `badge ${row.status || "received"}`;
+  badge.textContent = getStatusLabel(row.status || "received");
+
+  section.classList.remove("hidden");
+}
+
+function hideItemCard() {
+  const section = document.getElementById("itemCardSection");
+  if (section) {
+    section.classList.add("hidden");
+  }
+}
+
+function updateItemCardForSearch(filteredInventory) {
+  if (searchType === "itemId" && searchValue.trim()) {
+    if (filteredInventory.length > 0) {
+      showItemCard(filteredInventory[0]);
+    } else {
+      hideItemCard();
+    }
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("itemId") && filteredInventory.length > 0) {
+    showItemCard(filteredInventory[0]);
+    return;
+  }
+
+  hideItemCard();
+}
+
 function renderInventory() {
   const table = document.getElementById("inventoryTable");
   if (!table) return;
@@ -213,6 +263,7 @@ function renderInventory() {
   table.innerHTML = "";
 
   const filteredInventory = getFilteredInventory();
+  updateItemCardForSearch(filteredInventory);
 
   if (filteredInventory.length === 0) {
     const emptyRow = document.createElement("tr");
@@ -394,6 +445,18 @@ function applyLookupFromUrl() {
     updateSearchPlaceholder();
     if (searchValueEl) searchValueEl.value = location;
   }
+}
+
+function formatDisplayDate(dateValue) {
+  if (!dateValue) return "";
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
