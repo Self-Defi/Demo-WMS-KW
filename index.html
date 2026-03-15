@@ -12,7 +12,7 @@
       <h1>Kaitlyn Wolfe Warehouse Inventory System</h1>
       <p>
         Proof-of-concept inventory system showing intake, rack locations,
-        procurement visibility, and cycle counts.
+        procurement visibility, and QR-based lookup.
       </p>
     </div>
   </header>
@@ -47,6 +47,13 @@
           />
         </div>
       </div>
+
+      <div class="lookup-note">
+        QR lookup ready:
+        <code>?location=300-02A</code>
+        or
+        <code>?itemId=WH000004</code>
+      </div>
     </section>
 
     <section class="table-section">
@@ -70,21 +77,13 @@
         </table>
       </div>
     </section>
-
-    <section class="info-block">
-      <h2>Rack System Example</h2>
-      <ul>
-        <li>100 Rack Series → 100-01A / 100-01B</li>
-        <li>200 Rack Series → 200-02A / 200-02B</li>
-        <li>300 Rack Series → 300-02A / 300-02B</li>
-      </ul>
-    </section>
-
-    <section class="info-block">
-      <h2>Cycle Count Example</h2>
-      <ul id="cycleCount"></ul>
-    </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>SD Advisory | Digital Infrastructure Architect | CBP</p>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>
