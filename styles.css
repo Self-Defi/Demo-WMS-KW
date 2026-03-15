@@ -102,6 +102,20 @@ p {
   color: var(--kw-brown-dark);
 }
 
+.lookup-note {
+  margin-top: 12px;
+  color: var(--kw-brown-dark);
+  font-size: 0.95rem;
+}
+
+.lookup-note code {
+  background: #efe3d8;
+  color: var(--kw-brown-dark);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #d5c0ae;
+}
+
 .table-section {
   margin-bottom: 60px;
 }
@@ -117,7 +131,7 @@ p {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1280px;
+  min-width: 1460px;
 }
 
 thead th {
@@ -139,6 +153,21 @@ tbody td {
 
 tbody tr:hover td {
   background: #fcf7f2;
+}
+
+thead th:nth-child(2),
+tbody td:nth-child(2) {
+  min-width: 150px;
+}
+
+thead th:nth-child(3),
+tbody td:nth-child(3) {
+  min-width: 180px;
+}
+
+thead th:nth-child(4),
+tbody td:nth-child(4) {
+  min-width: 160px;
 }
 
 input,
@@ -201,17 +230,6 @@ select:focus {
   background: var(--kw-danger-hover);
 }
 
-.info-block {
-  margin-bottom: 68px;
-}
-
-.info-block ul {
-  margin: 0;
-  padding-left: 26px;
-  color: var(--kw-brown-dark);
-  line-height: 1.65;
-}
-
 .badge {
   display: inline-block;
   margin-top: 8px;
@@ -247,6 +265,19 @@ select:focus {
   color: var(--kw-brown);
   font-weight: 700;
   padding: 24px 14px;
+}
+
+.site-footer {
+  border-top: 1px solid #d8c4b2;
+  padding: 28px 0 40px;
+  background: #f3ebe3;
+}
+
+.site-footer p {
+  color: var(--kw-brown-dark);
+  font-size: 1rem;
+  font-weight: 700;
+  max-width: none;
 }
 
 @media (max-width: 900px) {
