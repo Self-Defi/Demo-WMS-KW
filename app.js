@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v3";
+const STORAGE_KEY = "kw_wms_inventory_v4";
 
 const defaultInventory = [
   {
@@ -48,7 +48,8 @@ const defaultInventory = [
 ];
 
 let inventory = loadInventory();
-let locationFilter = "";
+let searchType = "location";
+let searchValue = "";
 
 function cloneDefaultInventory() {
   return JSON.parse(JSON.stringify(defaultInventory));
@@ -75,13 +76,20 @@ function saveInventory() {
 function resetInventory() {
   inventory = cloneDefaultInventory();
   saveInventory();
-  renderInventory();
 
-  const searchInput = document.getElementById("locationSearch");
-  if (searchInput) {
-    searchInput.value = "";
+  const searchTypeEl = document.getElementById("searchType");
+  const searchValueEl = document.getElementById("searchValue");
+
+  searchType = "location";
+  searchValue = "";
+
+  if (searchTypeEl) searchTypeEl.value = "location";
+  if (searchValueEl) {
+    searchValueEl.value = "";
+    searchValueEl.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
   }
-  locationFilter = "";
+
+  renderInventory();
 }
 
 function padWarehouseId(number) {
@@ -119,12 +127,17 @@ function getStatusBadge(status) {
 }
 
 function getFilteredInventory() {
-  if (!locationFilter.trim()) return inventory;
+  if (!searchValue.trim()) return inventory;
 
-  const search = locationFilter.trim().toLowerCase();
-  return inventory.filter((row) =>
-    String(row.location || "").toLowerCase().includes(search)
-  );
+  const value = searchValue.trim().toLowerCase();
+
+  return inventory.filter((row) => {
+    if (searchType === "itemId") {
+      return String(row.itemId || "").toLowerCase().includes(value);
+    }
+
+    return String(row.location || "").toLowerCase().includes(value);
+  });
 }
 
 function renderInventory() {
@@ -138,7 +151,7 @@ function renderInventory() {
   if (filteredInventory.length === 0) {
     const emptyRow = document.createElement("tr");
     emptyRow.className = "empty-message";
-    emptyRow.innerHTML = `<td colspan="10">No items match that rack/location search.</td>`;
+    emptyRow.innerHTML = `<td colspan="10">No items match that search.</td>`;
     table.appendChild(emptyRow);
     renderCycleCount();
     return;
@@ -294,10 +307,22 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;");
 }
 
+function updateSearchPlaceholder() {
+  const input = document.getElementById("searchValue");
+  if (!input) return;
+
+  if (searchType === "itemId") {
+    input.placeholder = "Search Item ID (ex: WH000001 or WH000004)";
+  } else {
+    input.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const addRowBtn = document.getElementById("addRowBtn");
   const resetBtn = document.getElementById("resetBtn");
-  const locationSearch = document.getElementById("locationSearch");
+  const searchTypeEl = document.getElementById("searchType");
+  const searchValueEl = document.getElementById("searchValue");
 
   if (addRowBtn) {
     addRowBtn.addEventListener("click", addRow);
@@ -307,12 +332,21 @@ document.addEventListener("DOMContentLoaded", () => {
     resetBtn.addEventListener("click", resetInventory);
   }
 
-  if (locationSearch) {
-    locationSearch.addEventListener("input", (event) => {
-      locationFilter = event.target.value || "";
+  if (searchTypeEl) {
+    searchTypeEl.addEventListener("change", (event) => {
+      searchType = event.target.value || "location";
+      updateSearchPlaceholder();
       renderInventory();
     });
   }
 
+  if (searchValueEl) {
+    searchValueEl.addEventListener("input", (event) => {
+      searchValue = event.target.value || "";
+      renderInventory();
+    });
+  }
+
+  updateSearchPlaceholder();
   renderInventory();
 });
