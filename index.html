@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
   <header class="hero">
     <div class="container">
       <h1>Warehouse Management Demo</h1>
@@ -18,47 +17,48 @@
     </div>
   </header>
 
-  <section class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+  <main class="container">
+    <section class="section-head">
       <h2>Inventory Intake Log</h2>
-      <button id="addRowBtn" style="padding:10px 14px; border:none; border-radius:8px; background:#22c55e; color:#08111f; font-weight:bold; cursor:pointer;">
-        + Add Item
-      </button>
-    </div>
+      <button id="addRowBtn" class="add-btn">+ Add Item</button>
+    </section>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Project</th>
-          <th>Item ID</th>
-          <th>Received Date</th>
-          <th>Item</th>
-          <th>Quantity</th>
-          <th>Location</th>
-          <th>Status</th>
-          <th>Notes</th>
-          <th>Damage</th>
-          <th>Action</th>
-        </tr>
-      </thead>
+    <section class="table-section">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Item ID</th>
+              <th>Received Date</th>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th>Damage</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTable"></tbody>
+        </table>
+      </div>
+    </section>
 
-      <tbody id="inventoryTable"></tbody>
-    </table>
-  </section>
+    <section class="info-block">
+      <h2>Rack System Example</h2>
+      <ul>
+        <li>100 Rack Series → 100-01A / 100-01B</li>
+        <li>200 Rack Series → 200-02A / 200-02B</li>
+        <li>300 Rack Series → 300-02A / 300-02B</li>
+      </ul>
+    </section>
 
-  <section class="container">
-    <h2>Rack System Example</h2>
-    <ul>
-      <li>100 Rack Series → 100-01A / 100-01B</li>
-      <li>200 Rack Series → 200-02A / 200-02B</li>
-      <li>300 Rack Series → 300-02A / 300-02B</li>
-    </ul>
-  </section>
-
-  <section class="container">
-    <h2>Cycle Count Example</h2>
-    <ul id="cycleCount"></ul>
-  </section>
+    <section class="info-block">
+      <h2>Cycle Count Example</h2>
+      <ul id="cycleCount"></ul>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>
