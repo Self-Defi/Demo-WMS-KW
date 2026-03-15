@@ -11,9 +11,9 @@
   --kw-brown-light: #b08a6a;
   --kw-cream: #f7f3ee;
   --kw-cream-soft: #e9dfd3;
-  --kw-border: #6c5441;
-  --kw-danger: #8f2f23;
-  --kw-danger-hover: #77261c;
+  --kw-border: #c7b29f;
+  --kw-danger: #9b3526;
+  --kw-danger-hover: #812b1f;
   --kw-success: #6f4d33;
   --kw-success-hover: #5d402b;
 }
@@ -26,9 +26,9 @@ body {
 }
 
 .hero {
-  background: linear-gradient(180deg, #241b17 0%, #171311 100%);
+  background: linear-gradient(180deg, #2a1f18 0%, #171311 100%);
   color: var(--kw-cream);
-  border-bottom: 1px solid #4c3829;
+  border-bottom: 1px solid #4b382c;
   padding: 72px 24px;
 }
 
@@ -73,6 +73,21 @@ p {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-box {
+  max-width: 420px;
+}
+
+.search-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--kw-brown-dark);
 }
 
 .table-section {
@@ -215,6 +230,13 @@ select:focus {
   color: #ffffff;
 }
 
+.empty-message td {
+  text-align: center;
+  color: var(--kw-brown);
+  font-weight: 700;
+  padding: 24px 14px;
+}
+
 @media (max-width: 900px) {
   .hero {
     padding: 56px 20px;
@@ -230,5 +252,9 @@ select:focus {
 
   .button-group {
     width: 100%;
+  }
+
+  .search-box {
+    max-width: 100%;
   }
 }
