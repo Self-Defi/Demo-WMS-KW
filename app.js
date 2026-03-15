@@ -56,52 +56,75 @@ function renderInventory() {
   inventory.forEach((row, index) => {
     table.innerHTML += `
       <tr>
-        <td><input value="${row.project}" onchange="updateField(${index}, 'project', this.value)"></td>
-        <td><input value="${row.itemId}" onchange="updateField(${index}, 'itemId', this.value)"></td>
-        <td><input type="date" value="${row.date}" onchange="updateField(${index}, 'date', this.value)"></td>
-        <td><input value="${row.item}" onchange="updateField(${index}, 'item', this.value)"></td>
-        <td><input type="number" min="0" value="${row.quantity}" onchange="updateField(${index}, 'quantity', this.value)"></td>
-        <td><input value="${row.location}" onchange="updateField(${index}, 'location', this.value)"></td>
+
+        <td>
+          <input value="${row.project}"
+          onchange="updateField(${index}, 'project', this.value)">
+        </td>
+
+        <td>
+          <input value="${row.itemId}"
+          onchange="updateField(${index}, 'itemId', this.value)">
+        </td>
+
+        <td>
+          <input type="date" value="${row.date}"
+          onchange="updateField(${index}, 'date', this.value)">
+        </td>
+
+        <td>
+          <input value="${row.item}"
+          onchange="updateField(${index}, 'item', this.value)">
+        </td>
+
+        <td>
+          <input type="number" min="0" value="${row.quantity}"
+          onchange="updateField(${index}, 'quantity', this.value)">
+        </td>
+
+        <td>
+          <input value="${row.location}"
+          onchange="updateField(${index}, 'location', this.value)">
+        </td>
+
         <td>
           <select onchange="updateField(${index}, 'status', this.value)">
-            <option value="received" ${row.status === "received" ? "selected" : ""}>received</option>
-            <option value="hold" ${row.status === "hold" ? "selected" : ""}>hold</option>
-            <option value="delivered" ${row.status === "delivered" ? "selected" : ""}>delivered</option>
+            <option value="received" ${row.status==="received"?"selected":""}>Received</option>
+            <option value="hold" ${row.status==="hold"?"selected":""}>Hold</option>
+            <option value="delivered" ${row.status==="delivered"?"selected":""}>Delivered</option>
+            <option value="inspection" ${row.status==="inspection"?"selected":""}>Inspection</option>
           </select>
-          <div style="margin-top:6px;">${getStatusBadge(row.status)}</div>
         </td>
-        <td><input value="${row.notes}" onchange="updateField(${index}, 'notes', this.value)"></td>
-        <td><input value="${row.damage}" onchange="updateField(${index}, 'damage', this.value)"></td>
-        <td><button onclick="deleteRow(${index})" class="delete-btn">Delete</button></td>
+
+        <td>
+          <select onchange="updateField(${index}, 'notes', this.value)">
+            <option value="">Select</option>
+            <option value="Ready for install" ${row.notes==="Ready for install"?"selected":""}>Ready for install</option>
+            <option value="Waiting for PO" ${row.notes==="Waiting for PO"?"selected":""}>Waiting for PO</option>
+            <option value="Verify quantity" ${row.notes==="Verify quantity"?"selected":""}>Verify quantity</option>
+            <option value="Staged for delivery" ${row.notes==="Staged for delivery"?"selected":""}>Staged for delivery</option>
+          </select>
+        </td>
+
+        <td>
+          <select onchange="updateField(${index}, 'damage', this.value)">
+            <option value="">Select</option>
+            <option value="No Damage" ${row.damage==="No Damage"?"selected":""}>No Damage</option>
+            <option value="Minor Damage" ${row.damage==="Minor Damage"?"selected":""}>Minor Damage</option>
+            <option value="Major Damage" ${row.damage==="Major Damage"?"selected":""}>Major Damage</option>
+            <option value="Return Required" ${row.damage==="Return Required"?"selected":""}>Return Required</option>
+          </select>
+        </td>
+
+        <td>
+          <button onclick="deleteRow(${index})" class="delete-btn">Delete</button>
+        </td>
+
       </tr>
     `;
   });
 
   renderCycleCount();
-}
-
-function updateField(index, field, value) {
-  if (field === "quantity") {
-    inventory[index][field] = Number(value);
-  } else {
-    inventory[index][field] = value;
-  }
-  renderInventory();
-}
-
-function addRow() {
-  inventory.push({
-    project: "",
-    itemId: "",
-    date: "",
-    item: "",
-    quantity: 1,
-    location: "",
-    status: "received",
-    notes: "",
-    damage: ""
-  });
-  renderInventory();
 }
 
 function deleteRow(index) {
