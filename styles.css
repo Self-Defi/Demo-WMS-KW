@@ -79,10 +79,22 @@ p {
   margin-bottom: 20px;
 }
 
-.search-box {
-  max-width: 420px;
+.search-title {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--kw-brown-dark);
 }
 
+.search-controls {
+  display: grid;
+  grid-template-columns: 220px minmax(280px, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.search-mode label,
 .search-box label {
   display: block;
   margin-bottom: 8px;
@@ -254,7 +266,7 @@ select:focus {
     width: 100%;
   }
 
-  .search-box {
-    max-width: 100%;
+  .search-controls {
+    grid-template-columns: 1fr;
   }
 }
