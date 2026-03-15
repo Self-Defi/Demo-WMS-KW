@@ -113,7 +113,7 @@ p {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .item-card {
@@ -383,6 +383,113 @@ select:focus {
   max-width: none;
 }
 
+/* Modal */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 19, 17, 0.6);
+}
+
+.modal-panel {
+  position: relative;
+  width: min(980px, calc(100% - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  margin: 24px auto;
+  background: #fffdfb;
+  border: 1px solid #cfbead;
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(35, 22, 15, 0.24);
+}
+
+.modal-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 12px;
+  border-bottom: 1px solid #eadfd4;
+}
+
+.modal-head p {
+  color: var(--kw-brown);
+  max-width: none;
+  font-size: 0.98rem;
+}
+
+.close-btn {
+  border: none;
+  background: #241d19;
+  color: #ffffff;
+  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 18px 22px 22px;
+}
+
+.rack-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.summary-chip {
+  background: #f3ebe3;
+  border: 1px solid #d9c6b3;
+  color: var(--kw-brown-dark);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.rack-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #eadfd4;
+  border-radius: 16px;
+}
+
+.rack-table {
+  min-width: 700px;
+}
+
+.rack-table th,
+.rack-table td {
+  padding: 14px 12px;
+}
+
+.rack-item-button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #bfa48d;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--kw-black);
+  font-size: 0.94rem;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rack-item-button:hover {
+  background: #fcf7f2;
+  border-color: var(--kw-brown);
+}
+
 @media (max-width: 900px) {
   .hero {
     padding: 56px 20px;
@@ -410,5 +517,11 @@ select:focus {
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-panel {
+    width: calc(100% - 16px);
+    margin: 8px auto;
+    max-height: calc(100vh - 16px);
   }
 }
