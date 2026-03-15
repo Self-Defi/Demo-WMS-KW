@@ -1,86 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Kaitlyn Wolfe WMS Demo</title>
-
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaitlyn Wolfe WMS Demo</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
 
-<header class="hero">
-<div class="container">
+  <header class="hero">
+    <div class="container">
+      <h1>Warehouse Management Demo</h1>
+      <p>
+        Proof-of-concept inventory system showing intake, rack locations,
+        procurement visibility, and cycle counts.
+      </p>
+    </div>
+  </header>
 
-<h1>Warehouse Management Demo</h1>
+  <section class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h2>Inventory Intake Log</h2>
+      <button id="addRowBtn" style="padding:10px 14px; border:none; border-radius:8px; background:#22c55e; color:#08111f; font-weight:bold; cursor:pointer;">
+        + Add Item
+      </button>
+    </div>
 
-<p>
-Proof-of-concept inventory system showing intake, rack locations,
-procurement visibility, and cycle counts.
-</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Item ID</th>
+          <th>Received Date</th>
+          <th>Item</th>
+          <th>Quantity</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Notes</th>
+          <th>Damage</th>
+          <th>Action</th>
+        </tr>
+      </thead>
 
-</div>
-</header>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+  </section>
 
+  <section class="container">
+    <h2>Rack System Example</h2>
+    <ul>
+      <li>100 Rack Series → 100-01A / 100-01B</li>
+      <li>200 Rack Series → 200-02A / 200-02B</li>
+      <li>300 Rack Series → 300-02A / 300-02B</li>
+    </ul>
+  </section>
 
-<section class="container">
+  <section class="container">
+    <h2>Cycle Count Example</h2>
+    <ul id="cycleCount"></ul>
+  </section>
 
-<h2>Inventory Intake Log</h2>
-
-<table>
-
-<thead>
-<tr>
-
-<th>Project</th>
-<th>Job</th>
-<th>Received Date</th>
-<th>Warehouse Intake</th>
-<th>Location</th>
-<th>Status</th>
-<th>Notes</th>
-<th>Damage</th>
-
-</tr>
-</thead>
-
-<tbody id="inventoryTable">
-
-</tbody>
-
-</table>
-
-</section>
-
-
-<section class="container">
-
-<h2>Rack System Example</h2>
-
-<ul>
-
-<li>100 Rack Series → 100-01A / 100-01B</li>
-<li>200 Rack Series → 200-02A / 200-02B</li>
-<li>300 Rack Series → 300-02A / 300-02B</li>
-
-</ul>
-
-</section>
-
-
-<section class="container">
-
-<h2>Cycle Count Example</h2>
-
-<ul id="cycleCount">
-
-</ul>
-
-</section>
-
-<script src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
 </html>
