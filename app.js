@@ -1,9 +1,9 @@
-const STORAGE_KEY = "kw_wms_inventory_v2";
+const STORAGE_KEY = "kw_wms_inventory_v3";
 
 const defaultInventory = [
   {
     project: "Paradise Valley Residence",
-    itemId: "ITEM-1001",
+    itemId: "WH000001",
     date: "2026-03-10",
     item: "Mirror Set",
     quantity: 4,
@@ -14,7 +14,7 @@ const defaultInventory = [
   },
   {
     project: "Scottsdale Model Home",
-    itemId: "ITEM-1002",
+    itemId: "WH000002",
     date: "2026-03-11",
     item: "Dining Pendants",
     quantity: 2,
@@ -25,7 +25,7 @@ const defaultInventory = [
   },
   {
     project: "Arcadia Remodel",
-    itemId: "ITEM-1003",
+    itemId: "WH000003",
     date: "2026-03-12",
     item: "Bar Stools",
     quantity: 6,
@@ -36,7 +36,7 @@ const defaultInventory = [
   },
   {
     project: "Biltmore Spec Project",
-    itemId: "ITEM-1004",
+    itemId: "WH000004",
     date: "2026-03-12",
     item: "Coffee Tables",
     quantity: 2,
@@ -48,18 +48,23 @@ const defaultInventory = [
 ];
 
 let inventory = loadInventory();
+let locationFilter = "";
+
+function cloneDefaultInventory() {
+  return JSON.parse(JSON.stringify(defaultInventory));
+}
 
 function loadInventory() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return structuredClone(defaultInventory);
+    if (!saved) return cloneDefaultInventory();
 
     const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return structuredClone(defaultInventory);
+    if (!Array.isArray(parsed)) return cloneDefaultInventory();
 
     return parsed;
   } catch (error) {
-    return structuredClone(defaultInventory);
+    return cloneDefaultInventory();
   }
 }
 
@@ -68,9 +73,38 @@ function saveInventory() {
 }
 
 function resetInventory() {
-  inventory = structuredClone(defaultInventory);
+  inventory = cloneDefaultInventory();
   saveInventory();
   renderInventory();
+
+  const searchInput = document.getElementById("locationSearch");
+  if (searchInput) {
+    searchInput.value = "";
+  }
+  locationFilter = "";
+}
+
+function padWarehouseId(number) {
+  return String(number).padStart(6, "0");
+}
+
+function getHighestWarehouseNumber() {
+  let highest = 0;
+
+  inventory.forEach((row) => {
+    const match = String(row.itemId || "").match(/^WH(\d{6})$/i);
+    if (match) {
+      const num = Number(match[1]);
+      if (num > highest) highest = num;
+    }
+  });
+
+  return highest;
+}
+
+function generateItemId() {
+  const nextNumber = getHighestWarehouseNumber() + 1;
+  return `WH${padWarehouseId(nextNumber)}`;
 }
 
 function getStatusBadge(status) {
@@ -84,13 +118,34 @@ function getStatusBadge(status) {
   return `<span class="badge ${status}">${labelMap[status] || status}</span>`;
 }
 
+function getFilteredInventory() {
+  if (!locationFilter.trim()) return inventory;
+
+  const search = locationFilter.trim().toLowerCase();
+  return inventory.filter((row) =>
+    String(row.location || "").toLowerCase().includes(search)
+  );
+}
+
 function renderInventory() {
   const table = document.getElementById("inventoryTable");
   if (!table) return;
 
   table.innerHTML = "";
 
-  inventory.forEach((row, index) => {
+  const filteredInventory = getFilteredInventory();
+
+  if (filteredInventory.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.className = "empty-message";
+    emptyRow.innerHTML = `<td colspan="10">No items match that rack/location search.</td>`;
+    table.appendChild(emptyRow);
+    renderCycleCount();
+    return;
+  }
+
+  filteredInventory.forEach((row) => {
+    const realIndex = inventory.findIndex((item) => item.itemId === row.itemId);
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -98,7 +153,7 @@ function renderInventory() {
         <input
           type="text"
           value="${escapeHtml(row.project)}"
-          onchange="updateField(${index}, 'project', this.value)"
+          onchange="updateField(${realIndex}, 'project', this.value)"
         />
       </td>
 
@@ -106,7 +161,7 @@ function renderInventory() {
         <input
           type="text"
           value="${escapeHtml(row.itemId)}"
-          onchange="updateField(${index}, 'itemId', this.value)"
+          onchange="updateField(${realIndex}, 'itemId', this.value)"
         />
       </td>
 
@@ -114,7 +169,7 @@ function renderInventory() {
         <input
           type="date"
           value="${escapeHtml(row.date)}"
-          onchange="updateField(${index}, 'date', this.value)"
+          onchange="updateField(${realIndex}, 'date', this.value)"
         />
       </td>
 
@@ -122,7 +177,7 @@ function renderInventory() {
         <input
           type="text"
           value="${escapeHtml(row.item)}"
-          onchange="updateField(${index}, 'item', this.value)"
+          onchange="updateField(${realIndex}, 'item', this.value)"
         />
       </td>
 
@@ -131,7 +186,7 @@ function renderInventory() {
           type="number"
           min="0"
           value="${Number(row.quantity) || 0}"
-          onchange="updateField(${index}, 'quantity', this.value)"
+          onchange="updateField(${realIndex}, 'quantity', this.value)"
         />
       </td>
 
@@ -139,12 +194,12 @@ function renderInventory() {
         <input
           type="text"
           value="${escapeHtml(row.location)}"
-          onchange="updateField(${index}, 'location', this.value)"
+          onchange="updateField(${realIndex}, 'location', this.value)"
         />
       </td>
 
       <td>
-        <select onchange="updateField(${index}, 'status', this.value)">
+        <select onchange="updateField(${realIndex}, 'status', this.value)">
           <option value="received" ${row.status === "received" ? "selected" : ""}>Received</option>
           <option value="hold" ${row.status === "hold" ? "selected" : ""}>Hold</option>
           <option value="delivered" ${row.status === "delivered" ? "selected" : ""}>Delivered</option>
@@ -154,7 +209,7 @@ function renderInventory() {
       </td>
 
       <td>
-        <select onchange="updateField(${index}, 'notes', this.value)">
+        <select onchange="updateField(${realIndex}, 'notes', this.value)">
           <option value="Ready for install" ${row.notes === "Ready for install" ? "selected" : ""}>Ready for install</option>
           <option value="Waiting for PO" ${row.notes === "Waiting for PO" ? "selected" : ""}>Waiting for PO</option>
           <option value="Verify quantity" ${row.notes === "Verify quantity" ? "selected" : ""}>Verify quantity</option>
@@ -163,7 +218,7 @@ function renderInventory() {
       </td>
 
       <td>
-        <select onchange="updateField(${index}, 'damage', this.value)">
+        <select onchange="updateField(${realIndex}, 'damage', this.value)">
           <option value="No Damage" ${row.damage === "No Damage" ? "selected" : ""}>No Damage</option>
           <option value="Minor Damage" ${row.damage === "Minor Damage" ? "selected" : ""}>Minor Damage</option>
           <option value="Major Damage" ${row.damage === "Major Damage" ? "selected" : ""}>Major Damage</option>
@@ -172,7 +227,7 @@ function renderInventory() {
       </td>
 
       <td>
-        <button class="delete-btn" onclick="deleteRow(${index})">Delete</button>
+        <button class="delete-btn" onclick="deleteRow(${realIndex})">Delete</button>
       </td>
     `;
 
@@ -211,7 +266,7 @@ function updateField(index, field, value) {
 function addRow() {
   inventory.push({
     project: "",
-    itemId: "",
+    itemId: generateItemId(),
     date: "",
     item: "",
     quantity: 1,
@@ -242,6 +297,7 @@ function escapeHtml(value) {
 document.addEventListener("DOMContentLoaded", () => {
   const addRowBtn = document.getElementById("addRowBtn");
   const resetBtn = document.getElementById("resetBtn");
+  const locationSearch = document.getElementById("locationSearch");
 
   if (addRowBtn) {
     addRowBtn.addEventListener("click", addRow);
@@ -249,6 +305,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (resetBtn) {
     resetBtn.addEventListener("click", resetInventory);
+  }
+
+  if (locationSearch) {
+    locationSearch.addEventListener("input", (event) => {
+      locationFilter = event.target.value || "";
+      renderInventory();
+    });
   }
 
   renderInventory();
