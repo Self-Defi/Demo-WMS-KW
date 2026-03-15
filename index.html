@@ -35,6 +35,7 @@
           <select id="searchType">
             <option value="location">Location</option>
             <option value="itemId">Item ID</option>
+            <option value="rack">Rack</option>
           </select>
         </div>
 
@@ -126,6 +127,38 @@
       </div>
     </section>
   </main>
+
+  <div id="rackModal" class="modal hidden">
+    <div class="modal-backdrop" id="rackModalBackdrop"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <h3 id="rackModalTitle">Rack 100</h3>
+          <p id="rackModalSubtitle">Items currently assigned to this rack</p>
+        </div>
+        <button id="closeRackModalBtn" class="close-btn" type="button">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="rack-summary" id="rackSummary"></div>
+
+        <div class="rack-table-wrap">
+          <table class="rack-table">
+            <thead>
+              <tr>
+                <th>Item ID</th>
+                <th>Item</th>
+                <th>Shelf</th>
+                <th>Side</th>
+                <th>Full Location</th>
+              </tr>
+            </thead>
+            <tbody id="rackItemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="container">
