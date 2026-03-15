@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v4";
+const STORAGE_KEY = "kw_wms_inventory_v5";
 
 const defaultInventory = [
   {
@@ -43,6 +43,72 @@ const defaultInventory = [
     location: "300-02A",
     status: "delivered",
     notes: "Staged for delivery",
+    damage: "No Damage"
+  },
+  {
+    project: "Silverleaf Estate",
+    itemId: "WH000005",
+    date: "2026-03-13",
+    item: "Console Table",
+    quantity: 1,
+    location: "100-02B",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  },
+  {
+    project: "Desert Mountain Residence",
+    itemId: "WH000006",
+    date: "2026-03-13",
+    item: "Accent Chairs",
+    quantity: 2,
+    location: "101-01A",
+    status: "inspection",
+    notes: "Verify quantity",
+    damage: "Minor Damage"
+  },
+  {
+    project: "Camelback Remodel",
+    itemId: "WH000007",
+    date: "2026-03-14",
+    item: "Area Rug",
+    quantity: 1,
+    location: "201-03B",
+    status: "hold",
+    notes: "Waiting for PO",
+    damage: "No Damage"
+  },
+  {
+    project: "North Scottsdale Project",
+    itemId: "WH000008",
+    date: "2026-03-14",
+    item: "Nightstands",
+    quantity: 2,
+    location: "202-02A",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  },
+  {
+    project: "Paradise Ranch",
+    itemId: "WH000009",
+    date: "2026-03-14",
+    item: "Outdoor Dining Set",
+    quantity: 1,
+    location: "301-01B",
+    status: "delivered",
+    notes: "Staged for delivery",
+    damage: "No Damage"
+  },
+  {
+    project: "Beverly Hills Install",
+    itemId: "WH000010",
+    date: "2026-03-15",
+    item: "Pendant Lighting",
+    quantity: 3,
+    location: "302-02A",
+    status: "received",
+    notes: "Ready for install",
     damage: "No Damage"
   }
 ];
@@ -153,7 +219,6 @@ function renderInventory() {
     emptyRow.className = "empty-message";
     emptyRow.innerHTML = `<td colspan="10">No items match that search.</td>`;
     table.appendChild(emptyRow);
-    renderCycleCount();
     return;
   }
 
@@ -246,21 +311,6 @@ function renderInventory() {
 
     table.appendChild(tr);
   });
-
-  renderCycleCount();
-}
-
-function renderCycleCount() {
-  const list = document.getElementById("cycleCount");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  inventory.slice(0, 3).forEach((row) => {
-    const li = document.createElement("li");
-    li.textContent = `${row.location || "No Location"} — Verify quantity and condition for ${row.project || "Unnamed Project"}`;
-    list.appendChild(li);
-  });
 }
 
 function updateField(index, field, value) {
@@ -318,6 +368,34 @@ function updateSearchPlaceholder() {
   }
 }
 
+function applyLookupFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const itemId = params.get("itemId");
+  const location = params.get("location");
+
+  const searchTypeEl = document.getElementById("searchType");
+  const searchValueEl = document.getElementById("searchValue");
+
+  if (itemId) {
+    searchType = "itemId";
+    searchValue = itemId;
+
+    if (searchTypeEl) searchTypeEl.value = "itemId";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = itemId;
+    return;
+  }
+
+  if (location) {
+    searchType = "location";
+    searchValue = location;
+
+    if (searchTypeEl) searchTypeEl.value = "location";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = location;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const addRowBtn = document.getElementById("addRowBtn");
   const resetBtn = document.getElementById("resetBtn");
@@ -348,5 +426,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   updateSearchPlaceholder();
+  applyLookupFromUrl();
   renderInventory();
 });
