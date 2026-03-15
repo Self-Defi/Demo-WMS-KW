@@ -1,3 +1,5 @@
+const STORAGE_KEY = "kw_wms_inventory_v2";
+
 const defaultInventory = [
   {
     project: "Paradise Valley Residence",
@@ -45,7 +47,31 @@ const defaultInventory = [
   }
 ];
 
-let inventory = JSON.parse(JSON.stringify(defaultInventory));
+let inventory = loadInventory();
+
+function loadInventory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return structuredClone(defaultInventory);
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return structuredClone(defaultInventory);
+
+    return parsed;
+  } catch (error) {
+    return structuredClone(defaultInventory);
+  }
+}
+
+function saveInventory() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+}
+
+function resetInventory() {
+  inventory = structuredClone(defaultInventory);
+  saveInventory();
+  renderInventory();
+}
 
 function getStatusBadge(status) {
   const labelMap = {
@@ -178,6 +204,7 @@ function updateField(index, field, value) {
     inventory[index][field] = value;
   }
 
+  saveInventory();
   renderInventory();
 }
 
@@ -194,11 +221,13 @@ function addRow() {
     damage: "No Damage"
   });
 
+  saveInventory();
   renderInventory();
 }
 
 function deleteRow(index) {
   inventory.splice(index, 1);
+  saveInventory();
   renderInventory();
 }
 
@@ -212,8 +241,14 @@ function escapeHtml(value) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const addRowBtn = document.getElementById("addRowBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
   if (addRowBtn) {
     addRowBtn.addEventListener("click", addRow);
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetInventory);
   }
 
   renderInventory();
