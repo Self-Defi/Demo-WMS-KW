@@ -3,102 +3,132 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kaitlyn Wolfe Warehouse Inventory System</title>
+  <title>KW Warehouse Management System</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="hero">
     <div class="container">
-      <h1>Kaitlyn Wolfe Warehouse Inventory System</h1>
-      <p>
-        Proof-of-concept inventory system showing intake, rack locations,
-        procurement visibility, and QR-based lookup.
-      </p>
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">KW Warehouse Management System</div>
+          <h1>Live Inventory & Rack Visibility</h1>
+          <p>
+            Track inventory by rack location, assign items to live warehouse slots, and retrieve rack contents
+            instantly through the live warehouse backend.
+          </p>
+        </div>
+
+        <div class="status-panel">
+          <div class="status-line">
+            <span class="status-label">Backend</span>
+            <span id="connectionBadge" class="pill neutral">Checking…</span>
+          </div>
+          <div class="status-line">
+            <span class="status-label">Records</span>
+            <span id="recordCount" class="status-value">0</span>
+          </div>
+          <div class="status-line">
+            <span class="status-label">Rack Slots</span>
+            <span id="rackCount" class="status-value">0</span>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <section class="section-head">
-      <h2>Inventory Intake Log</h2>
+      <div>
+        <h2>Inventory Search</h2>
+        <div class="section-copy">
+          Search by rack code, item code, project, or across all visible fields.
+        </div>
+      </div>
+
       <div class="button-group">
-        <button id="resetBtn" class="reset-btn" type="button">Reset Demo Data</button>
-        <button id="addRowBtn" class="add-btn" type="button">+ Add Item</button>
+        <button id="refreshBtn" class="add-btn" type="button">Refresh Data</button>
+        <button id="addRowBtn" class="reset-btn" type="button">Add Item</button>
       </div>
     </section>
 
     <section class="search-section">
-      <label class="search-title" for="searchValue">Search Inventory</label>
-
       <div class="search-controls">
         <div class="search-mode">
-          <label for="searchType">Search By</label>
+          <label for="searchType">Search Mode</label>
           <select id="searchType">
-            <option value="location">Location</option>
-            <option value="itemId">Item ID</option>
-            <option value="rack">Rack</option>
+            <option value="rack_code">Rack Code</option>
+            <option value="item_code">Item Code</option>
+            <option value="project_name">Project</option>
+            <option value="all">All Fields</option>
           </select>
         </div>
 
         <div class="search-box">
-          <label for="searchValue">Search Value</label>
-          <input
-            type="text"
-            id="searchValue"
-            placeholder="Search rack location (ex: 200-02A or 300-02A)"
-          />
+          <label for="searchValue">Search</label>
+          <input id="searchValue" type="text" placeholder="Search rack code (ex: 302-02B)" />
         </div>
       </div>
     </section>
 
+    <section id="messageBar" class="message hidden" aria-live="polite"></section>
+
     <section id="itemCardSection" class="item-card-section hidden">
       <div class="item-card">
         <div class="item-card-image">
-          <div class="image-placeholder">
-            <span>Item Image</span>
-            <small>Photo coming soon</small>
+          <div class="image-frame">
+            <img id="detailImage" class="detail-image hidden" alt="Item photo" />
+            <div id="imagePlaceholder" class="image-placeholder">
+              <span>Warehouse Item</span>
+              <small>No image uploaded yet</small>
+            </div>
+          </div>
+
+          <div class="upload-panel">
+            <input id="detailImageInput" type="file" accept="image/*" class="hidden" />
+            <button id="uploadImageBtn" class="add-btn upload-btn" type="button">Upload Photo</button>
+            <button id="replaceImageBtn" class="reset-btn upload-btn hidden" type="button">Replace Photo</button>
           </div>
         </div>
 
         <div class="item-card-content">
           <div class="item-card-head">
-            <h3 id="detailItemName">Item Name</h3>
-            <span id="detailStatusBadge" class="badge received">Received</span>
+            <div>
+              <h3 id="detailItemName">Item</h3>
+              <div id="detailStatusBadge" class="badge received">Received</div>
+            </div>
+            <button id="closeItemCardBtn" class="reset-btn" type="button">Close</button>
           </div>
 
           <div class="detail-grid">
             <div class="detail-box">
-              <label>Item ID</label>
-              <div id="detailItemId">WH000000</div>
+              <label>Item Code</label>
+              <div id="detailItemCode"></div>
             </div>
 
             <div class="detail-box">
               <label>Project</label>
-              <div id="detailProject">Project Name</div>
+              <div id="detailProject"></div>
             </div>
 
             <div class="detail-box">
-              <label>Quantity</label>
-              <div id="detailQuantity">0</div>
+              <label>Rack Code</label>
+              <div id="detailRackCode"></div>
             </div>
 
             <div class="detail-box">
-              <label>Location</label>
-              <div id="detailLocation">000-00A</div>
+              <label>Status</label>
+              <div id="detailStatus"></div>
             </div>
 
-            <div class="detail-box">
-              <label>Received Date</label>
-              <div id="detailDate">YYYY-MM-DD</div>
-            </div>
-
-            <div class="detail-box">
+            <div class="detail-box full">
               <label>Notes</label>
-              <div id="detailNotes">None</div>
+              <div id="detailNotes"></div>
             </div>
 
-            <div class="detail-box">
-              <label>Damage</label>
-              <div id="detailDamage">No Damage</div>
+            <div class="detail-box full">
+              <label>Created</label>
+              <div id="detailCreatedAt"></div>
             </div>
           </div>
         </div>
@@ -111,15 +141,14 @@
           <thead>
             <tr>
               <th>Project</th>
-              <th>Item ID</th>
-              <th>Received Date</th>
-              <th>Item</th>
-              <th>Quantity</th>
-              <th>Location</th>
+              <th>Item Code</th>
+              <th>Item Name</th>
               <th>Status</th>
+              <th>Rack Code</th>
               <th>Notes</th>
-              <th>Damage</th>
-              <th>Action</th>
+              <th>Created</th>
+              <th>Updated</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="inventoryTable"></tbody>
@@ -128,29 +157,36 @@
     </section>
   </main>
 
-  <div id="rackModal" class="modal hidden">
-    <div class="modal-backdrop" id="rackModalBackdrop"></div>
+  <footer class="site-footer">
+    <div class="container">
+      <p>KW Warehouse Management System • Live Warehouse Inventory</p>
+    </div>
+  </footer>
+
+  <section id="rackModal" class="modal hidden" aria-hidden="true">
+    <div id="rackModalBackdrop" class="modal-backdrop"></div>
+
     <div class="modal-panel">
       <div class="modal-head">
         <div>
-          <h3 id="rackModalTitle">Rack 100</h3>
-          <p id="rackModalSubtitle">Items currently assigned to this rack</p>
+          <h3 id="rackModalTitle">Rack</h3>
+          <p id="rackModalSubtitle">Live items currently assigned to this rack</p>
         </div>
-        <button id="closeRackModalBtn" class="close-btn" type="button">×</button>
+        <button id="closeRackModalBtn" class="close-btn" type="button" aria-label="Close rack panel">×</button>
       </div>
 
       <div class="modal-body">
-        <div class="rack-summary" id="rackSummary"></div>
+        <div id="rackSummary" class="rack-summary"></div>
 
         <div class="rack-table-wrap">
           <table class="rack-table">
             <thead>
               <tr>
-                <th>Item ID</th>
-                <th>Item</th>
-                <th>Shelf</th>
-                <th>Side</th>
-                <th>Full Location</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Rack Code</th>
               </tr>
             </thead>
             <tbody id="rackItemsBody"></tbody>
@@ -158,14 +194,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>SD Advisory | Digital Infrastructure Architect | CBP</p>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
