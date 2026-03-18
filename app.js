@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kw_wms_inventory_v8";
+const STORAGE_KEY = "wms_inventory_v8";
 
 const defaultInventory = [
   {
