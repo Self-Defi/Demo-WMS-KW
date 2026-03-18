@@ -1,6 +1,6 @@
-# Kaitlyn Wolfe — Warehouse Management System (WMS) Demo
+# Self Defi— Warehouse Inventory System (WIS) Demo
 
-This repository demonstrates a **lightweight Warehouse Management System prototype** designed to improve visibility between **Warehouse Operations and Procurement**.
+This repository demonstrates a **lightweight Warehouse Inventory System prototype** designed to improve visibility between **Warehouse Operations and Procurement**.
 
 The goal is to eliminate inventory blind spots and create a shared system where all incoming items can be quickly located, tracked, and verified.
 
