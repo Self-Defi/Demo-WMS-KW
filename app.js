@@ -1,122 +1,220 @@
-const STATUS_OPTIONS = ["received", "hold", "delivered", "inspection"];
-const STORAGE_BUCKET = "item-images";
+const STORAGE_KEY = "kw_wms_inventory_v8";
 
-let inventory = [];
-let racks = [];
-let searchType = "rack_code";
+const defaultInventory = [
+  {
+    project: "Paradise Valley Residence",
+    itemId: "WH000001",
+    date: "2026-03-10",
+    item: "Mirror Set",
+    quantity: 4,
+    location: "100-01A",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  },
+  {
+    project: "Scottsdale Model Home",
+    itemId: "WH000002",
+    date: "2026-03-11",
+    item: "Dining Pendants",
+    quantity: 2,
+    location: "104-03B",
+    status: "hold",
+    notes: "Waiting for PO",
+    damage: "Minor Damage"
+  },
+  {
+    project: "Arcadia Remodel",
+    itemId: "WH000003",
+    date: "2026-03-12",
+    item: "Bar Stools",
+    quantity: 6,
+    location: "200-02A",
+    status: "received",
+    notes: "Verify quantity",
+    damage: "No Damage"
+  },
+  {
+    project: "Biltmore Spec Project",
+    itemId: "WH000004",
+    date: "2026-03-12",
+    item: "Coffee Tables",
+    quantity: 2,
+    location: "300-02A",
+    status: "delivered",
+    notes: "Staged for delivery",
+    damage: "No Damage"
+  },
+  {
+    project: "Silverleaf Estate",
+    itemId: "WH000005",
+    date: "2026-03-13",
+    item: "Console Table",
+    quantity: 1,
+    location: "100-02B",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  },
+  {
+    project: "Desert Mountain Residence",
+    itemId: "WH000006",
+    date: "2026-03-13",
+    item: "Accent Chairs",
+    quantity: 2,
+    location: "101-01A",
+    status: "inspection",
+    notes: "Verify quantity",
+    damage: "Minor Damage"
+  },
+  {
+    project: "Camelback Remodel",
+    itemId: "WH000007",
+    date: "2026-03-14",
+    item: "Area Rug",
+    quantity: 1,
+    location: "201-03B",
+    status: "hold",
+    notes: "Waiting for PO",
+    damage: "No Damage"
+  },
+  {
+    project: "North Scottsdale Project",
+    itemId: "WH000008",
+    date: "2026-03-14",
+    item: "Nightstands",
+    quantity: 2,
+    location: "202-02A",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  },
+  {
+    project: "Paradise Ranch",
+    itemId: "WH000009",
+    date: "2026-03-14",
+    item: "Outdoor Dining Set",
+    quantity: 1,
+    location: "301-01B",
+    status: "delivered",
+    notes: "Staged for delivery",
+    damage: "No Damage"
+  },
+  {
+    project: "Beverly Hills Install",
+    itemId: "WH000010",
+    date: "2026-03-15",
+    item: "Pendant Lighting",
+    quantity: 3,
+    location: "302-02A",
+    status: "received",
+    notes: "Ready for install",
+    damage: "No Damage"
+  }
+];
+
+let inventory = loadInventory();
+let searchType = "location";
 let searchValue = "";
-let currentItemId = null;
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+function cloneDefaultInventory() {
+  return JSON.parse(JSON.stringify(defaultInventory));
 }
 
-function formatDisplayDate(dateValue) {
-  if (!dateValue) return "";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return String(dateValue);
+function loadInventory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return cloneDefaultInventory();
 
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return cloneDefaultInventory();
+
+    return parsed;
+  } catch (error) {
+    return cloneDefaultInventory();
+  }
+}
+
+function saveInventory() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+}
+
+function resetInventory() {
+  inventory = cloneDefaultInventory();
+  saveInventory();
+
+  const searchTypeEl = document.getElementById("searchType");
+  const searchValueEl = document.getElementById("searchValue");
+
+  searchType = "location";
+  searchValue = "";
+
+  if (searchTypeEl) searchTypeEl.value = "location";
+  if (searchValueEl) {
+    searchValueEl.value = "";
+    searchValueEl.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
+  }
+
+  hideItemCard();
+  closeRackModal();
+  renderInventory();
+}
+
+function padWarehouseId(number) {
+  return String(number).padStart(6, "0");
+}
+
+function getHighestWarehouseNumber() {
+  let highest = 0;
+
+  inventory.forEach((row) => {
+    const match = String(row.itemId || "").match(/^WH(\d{6})$/i);
+    if (match) {
+      const num = Number(match[1]);
+      if (num > highest) highest = num;
+    }
   });
+
+  return highest;
+}
+
+function generateItemId() {
+  const nextNumber = getHighestWarehouseNumber() + 1;
+  return `WH${padWarehouseId(nextNumber)}`;
 }
 
 function getStatusLabel(status) {
-  const map = {
+  const labelMap = {
     received: "Received",
     hold: "Hold",
     delivered: "Delivered",
     inspection: "Inspection"
   };
-  return map[status] || status || "";
+  return labelMap[status] || status;
 }
 
 function getStatusBadge(status) {
-  return `<span class="badge ${escapeHtml(status || "received")}">${escapeHtml(getStatusLabel(status || "received"))}</span>`;
+  return `<span class="badge ${status}">${getStatusLabel(status)}</span>`;
 }
 
-function setConnectionState(state, text) {
-  const badge = document.getElementById("connectionBadge");
-  if (!badge) return;
-
-  badge.className = "pill";
-  if (state === "success") badge.classList.add("success");
-  else if (state === "error") badge.classList.add("error");
-  else badge.classList.add("neutral");
-
-  badge.textContent = text;
-}
-
-function showMessage(text, type = "success") {
-  const bar = document.getElementById("messageBar");
-  if (!bar) return;
-
-  if (!text) {
-    bar.className = "message hidden";
-    bar.textContent = "";
-    return;
+function parseLocationParts(location) {
+  const text = String(location || "").trim();
+  const match = text.match(/^(\d{3})-(\d{2})([A-Za-z])$/);
+  if (!match) {
+    return {
+      rack: "",
+      shelf: "",
+      side: "",
+      full: text
+    };
   }
 
-  bar.className = `message ${type}`;
-  bar.textContent = text;
-}
-
-function updateCounts() {
-  const recordCount = document.getElementById("recordCount");
-  const rackCount = document.getElementById("rackCount");
-
-  if (recordCount) recordCount.textContent = String(inventory.length);
-  if (rackCount) rackCount.textContent = String(racks.length);
-}
-
-function updateSearchPlaceholder() {
-  const input = document.getElementById("searchValue");
-  if (!input) return;
-
-  if (searchType === "item_code") {
-    input.placeholder = "Search item code (ex: WH-000000001)";
-    return;
-  }
-
-  if (searchType === "project_name") {
-    input.placeholder = "Search project name";
-    return;
-  }
-
-  if (searchType === "rack_code") {
-    input.placeholder = "Search rack code (ex: 302-02B)";
-    return;
-  }
-
-  input.placeholder = "Search any visible field";
-}
-
-async function fetchRacks() {
-  const { data, error } = await db
-    .from("racks")
-    .select("rack_code, series, level_code, side_code")
-    .order("rack_code", { ascending: true });
-
-  if (error) throw error;
-  racks = data || [];
-}
-
-async function fetchItems() {
-  const { data, error } = await db
-    .from("items")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  inventory = data || [];
+  return {
+    rack: match[1],
+    shelf: match[2],
+    side: match[3].toUpperCase(),
+    full: text
+  };
 }
 
 function getFilteredInventory() {
@@ -125,84 +223,64 @@ function getFilteredInventory() {
   const value = searchValue.trim().toLowerCase();
 
   return inventory.filter((row) => {
-    if (searchType === "all") {
-      return [
-        row.project_name,
-        row.item_code,
-        row.item_name,
-        row.status,
-        row.rack_code,
-        row.notes
-      ].some((field) => String(field || "").toLowerCase().includes(value));
+    if (searchType === "itemId") {
+      return String(row.itemId || "").toLowerCase().includes(value);
     }
 
-    return String(row[searchType] || "").toLowerCase().includes(value);
+    if (searchType === "rack") {
+      const parts = parseLocationParts(row.location);
+      return String(parts.rack || "").toLowerCase().includes(value);
+    }
+
+    return String(row.location || "").toLowerCase().includes(value);
   });
-}
-
-function findItemById(id) {
-  return inventory.find((row) => row.id === id) || null;
-}
-
-function renderItemImage(row) {
-  const imageEl = document.getElementById("detailImage");
-  const placeholderEl = document.getElementById("imagePlaceholder");
-  const replaceBtn = document.getElementById("replaceImageBtn");
-
-  if (!imageEl || !placeholderEl || !replaceBtn) return;
-
-  if (row?.image_url) {
-    imageEl.src = row.image_url;
-    imageEl.classList.remove("hidden");
-    placeholderEl.classList.add("hidden");
-    replaceBtn.classList.remove("hidden");
-  } else {
-    imageEl.src = "";
-    imageEl.classList.add("hidden");
-    placeholderEl.classList.remove("hidden");
-    replaceBtn.classList.add("hidden");
-  }
 }
 
 function showItemCard(row) {
   const section = document.getElementById("itemCardSection");
   if (!section || !row) return;
 
-  currentItemId = row.id;
-
-  document.getElementById("detailItemName").textContent = row.item_name || "Unnamed Item";
-  document.getElementById("detailItemCode").textContent = row.item_code || "";
-  document.getElementById("detailProject").textContent = row.project_name || "";
-  document.getElementById("detailRackCode").textContent = row.rack_code || "";
-  document.getElementById("detailStatus").textContent = getStatusLabel(row.status || "received");
+  document.getElementById("detailItemName").textContent = row.item || "Unnamed Item";
+  document.getElementById("detailItemId").textContent = row.itemId || "";
+  document.getElementById("detailProject").textContent = row.project || "";
+  document.getElementById("detailQuantity").textContent = String(row.quantity ?? "");
+  document.getElementById("detailLocation").textContent = row.location || "";
+  document.getElementById("detailDate").textContent = formatDisplayDate(row.date);
   document.getElementById("detailNotes").textContent = row.notes || "";
-  document.getElementById("detailCreatedAt").textContent = formatDisplayDate(row.created_at);
+  document.getElementById("detailDamage").textContent = row.damage || "";
 
   const badge = document.getElementById("detailStatusBadge");
   badge.className = `badge ${row.status || "received"}`;
   badge.textContent = getStatusLabel(row.status || "received");
 
-  renderItemImage(row);
   section.classList.remove("hidden");
 }
 
 function hideItemCard() {
   const section = document.getElementById("itemCardSection");
-  if (section) section.classList.add("hidden");
-  currentItemId = null;
+  if (section) {
+    section.classList.add("hidden");
+  }
 }
 
-function openItemCardById(id) {
-  const row = findItemById(id);
-  if (!row) return;
-  showItemCard(row);
+function openItemCardByIndex(index) {
+  if (!inventory[index]) return;
+  showItemCard(inventory[index]);
   closeRackModal();
 }
 
 function buildRackItems(rackCode) {
   return inventory
-    .filter((row) => String(row.rack_code || "").toUpperCase() === String(rackCode || "").toUpperCase())
-    .sort((a, b) => String(a.item_code || "").localeCompare(String(b.item_code || "")));
+    .filter((row) => parseLocationParts(row.location).rack === String(rackCode))
+    .sort((a, b) => {
+      const aParts = parseLocationParts(a.location);
+      const bParts = parseLocationParts(b.location);
+
+      if (aParts.shelf !== bParts.shelf) {
+        return aParts.shelf.localeCompare(bParts.shelf);
+      }
+      return aParts.side.localeCompare(bParts.side);
+    });
 }
 
 function openRackModal(rackCode) {
@@ -217,18 +295,18 @@ function openRackModal(rackCode) {
   const rackItems = buildRackItems(rackCode);
 
   title.textContent = `Rack ${rackCode}`;
-  subtitle.textContent = "Live items currently assigned to this rack";
+  subtitle.textContent = "Items currently assigned to this rack";
+
   summary.innerHTML = "";
   body.innerHTML = "";
 
-  const receivedCount = rackItems.filter((item) => item.status === "received").length;
-  const deliveredCount = rackItems.filter((item) => item.status === "delivered").length;
+  const totalItems = rackItems.length;
+  const totalQty = rackItems.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0);
 
   [
     `Rack: ${rackCode}`,
-    `Records: ${rackItems.length}`,
-    `Received: ${receivedCount}`,
-    `Delivered: ${deliveredCount}`
+    `Records: ${totalItems}`,
+    `Total Qty: ${totalQty}`
   ].forEach((text) => {
     const chip = document.createElement("div");
     chip.className = "summary-chip";
@@ -236,23 +314,30 @@ function openRackModal(rackCode) {
     summary.appendChild(chip);
   });
 
-  if (!rackItems.length) {
+  if (rackItems.length === 0) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="5">No items currently assigned to this rack.</td>`;
     body.appendChild(tr);
   } else {
     rackItems.forEach((row) => {
+      const parts = parseLocationParts(row.location);
+      const realIndex = inventory.findIndex((item) => item.itemId === row.itemId);
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>
-          <button type="button" class="rack-item-button" onclick="openItemCardById(${row.id})">
-            ${escapeHtml(row.item_code)}
+          <button
+            type="button"
+            class="rack-item-button"
+            onclick="openItemCardByIndex(${realIndex})"
+          >
+            ${escapeHtml(row.itemId)}
           </button>
         </td>
-        <td>${escapeHtml(row.item_name || "")}</td>
-        <td>${escapeHtml(row.project_name || "")}</td>
-        <td>${getStatusBadge(row.status || "received")}</td>
-        <td>${escapeHtml(row.rack_code || "")}</td>
+        <td>${escapeHtml(row.item)}</td>
+        <td>${escapeHtml(parts.shelf)}</td>
+        <td>${escapeHtml(parts.side)}</td>
+        <td>${escapeHtml(parts.full)}</td>
       `;
       body.appendChild(tr);
     });
@@ -263,54 +348,41 @@ function openRackModal(rackCode) {
 
 function closeRackModal() {
   const modal = document.getElementById("rackModal");
-  if (modal) modal.classList.add("hidden");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
-function createRackSelect(currentValue, itemId) {
-  const options = ['<option value="">Unassigned</option>']
-    .concat(
-      racks.map(
-        (rack) =>
-          `<option value="${escapeHtml(rack.rack_code)}" ${
-            rack.rack_code === (currentValue || "") ? "selected" : ""
-          }>${escapeHtml(rack.rack_code)}</option>`
-      )
-    )
-    .join("");
-
-  return `<select onchange="updateField(${itemId}, 'rack_code', this.value)">${options}</select>`;
-}
-
-function createStatusSelect(currentValue, itemId) {
-  const options = STATUS_OPTIONS.map(
-    (status) =>
-      `<option value="${status}" ${status === currentValue ? "selected" : ""}>${getStatusLabel(status)}</option>`
-  ).join("");
-
-  return `<select onchange="updateField(${itemId}, 'status', this.value)">${options}</select>`;
-}
-
-function updateUiForSearch(filteredInventory) {
-  if (searchType === "item_code" && searchValue.trim()) {
+function updateItemCardForSearch(filteredInventory) {
+  if (searchType === "itemId" && searchValue.trim()) {
     if (filteredInventory.length > 0) {
       showItemCard(filteredInventory[0]);
-    } else if (currentItemId && !filteredInventory.find((row) => row.id === currentItemId)) {
+    } else {
       hideItemCard();
     }
     return;
   }
 
-  if (searchType === "rack_code" && searchValue.trim()) {
+  if (searchType === "rack" && searchValue.trim()) {
     hideItemCard();
-    const exactRack = racks.find(
-      (rack) => String(rack.rack_code).toLowerCase() === searchValue.trim().toLowerCase()
-    );
-    if (exactRack) openRackModal(exactRack.rack_code);
-    else closeRackModal();
+    openRackModal(searchValue.trim());
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("itemId") && filteredInventory.length > 0) {
+    showItemCard(filteredInventory[0]);
+    return;
+  }
+
+  if (params.get("rack") && searchValue.trim()) {
+    hideItemCard();
+    openRackModal(searchValue.trim());
     return;
   }
 
   if (!searchValue.trim()) {
+    hideItemCard();
     closeRackModal();
   }
 }
@@ -319,75 +391,105 @@ function renderInventory() {
   const table = document.getElementById("inventoryTable");
   if (!table) return;
 
-  const filteredInventory = getFilteredInventory();
-  updateUiForSearch(filteredInventory);
-  updateCounts();
-
   table.innerHTML = "";
 
-  if (!filteredInventory.length) {
+  const filteredInventory = getFilteredInventory();
+  updateItemCardForSearch(filteredInventory);
+
+  if (filteredInventory.length === 0) {
     const emptyRow = document.createElement("tr");
     emptyRow.className = "empty-message";
-    emptyRow.innerHTML = `<td colspan="9">No items match that search.</td>`;
+    emptyRow.innerHTML = `<td colspan="10">No items match that search.</td>`;
     table.appendChild(emptyRow);
     return;
   }
 
   filteredInventory.forEach((row) => {
+    const realIndex = inventory.findIndex((item) => item.itemId === row.itemId);
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>
-        <div class="project-cell">
-          <input
-            type="text"
-            value="${escapeHtml(row.project_name || "")}"
-            onchange="updateField(${row.id}, 'project_name', this.value)"
-            placeholder="Project Name"
-          />
-          <button
-            type="button"
-            class="view-button"
-            onclick="openItemCardById(${row.id})"
-            title="Open item card"
-          >
-            View Item Card
-          </button>
-        </div>
-      </td>
-
-      <td>
-        <button type="button" class="link-button" onclick="openItemCardById(${row.id})">
-          ${escapeHtml(row.item_code || "")}
+        <button
+          type="button"
+          class="project-button"
+          onclick="openItemCardByIndex(${realIndex})"
+        >
+          ${escapeHtml(row.project)}
         </button>
       </td>
 
       <td>
         <input
           type="text"
-          value="${escapeHtml(row.item_name || "")}"
-          onchange="updateField(${row.id}, 'item_name', this.value)"
+          value="${escapeHtml(row.itemId)}"
+          onchange="updateField(${realIndex}, 'itemId', this.value)"
         />
       </td>
 
       <td>
-        ${createStatusSelect(row.status || "received", row.id)}
-        ${getStatusBadge(row.status || "received")}
+        <input
+          type="date"
+          value="${escapeHtml(row.date)}"
+          onchange="updateField(${realIndex}, 'date', this.value)"
+        />
       </td>
 
       <td>
-        ${createRackSelect(row.rack_code || "", row.id)}
+        <input
+          type="text"
+          value="${escapeHtml(row.item)}"
+          onchange="updateField(${realIndex}, 'item', this.value)"
+        />
       </td>
 
       <td>
-        <textarea onchange="updateField(${row.id}, 'notes', this.value)">${escapeHtml(row.notes || "")}</textarea>
+        <input
+          type="number"
+          min="0"
+          value="${Number(row.quantity) || 0}"
+          onchange="updateField(${realIndex}, 'quantity', this.value)"
+        />
       </td>
 
-      <td>${escapeHtml(formatDisplayDate(row.created_at))}</td>
-      <td>${escapeHtml(formatDisplayDate(row.updated_at))}</td>
+      <td>
+        <input
+          type="text"
+          value="${escapeHtml(row.location)}"
+          onchange="updateField(${realIndex}, 'location', this.value)"
+        />
+      </td>
 
       <td>
-        <button class="delete-btn" type="button" onclick="deleteRow(${row.id})">Delete</button>
+        <select onchange="updateField(${realIndex}, 'status', this.value)">
+          <option value="received" ${row.status === "received" ? "selected" : ""}>Received</option>
+          <option value="hold" ${row.status === "hold" ? "selected" : ""}>Hold</option>
+          <option value="delivered" ${row.status === "delivered" ? "selected" : ""}>Delivered</option>
+          <option value="inspection" ${row.status === "inspection" ? "selected" : ""}>Inspection</option>
+        </select>
+        ${getStatusBadge(row.status)}
+      </td>
+
+      <td>
+        <select onchange="updateField(${realIndex}, 'notes', this.value)">
+          <option value="Ready for install" ${row.notes === "Ready for install" ? "selected" : ""}>Ready for install</option>
+          <option value="Waiting for PO" ${row.notes === "Waiting for PO" ? "selected" : ""}>Waiting for PO</option>
+          <option value="Verify quantity" ${row.notes === "Verify quantity" ? "selected" : ""}>Verify quantity</option>
+          <option value="Staged for delivery" ${row.notes === "Staged for delivery" ? "selected" : ""}>Staged for delivery</option>
+        </select>
+      </td>
+
+      <td>
+        <select onchange="updateField(${realIndex}, 'damage', this.value)">
+          <option value="No Damage" ${row.damage === "No Damage" ? "selected" : ""}>No Damage</option>
+          <option value="Minor Damage" ${row.damage === "Minor Damage" ? "selected" : ""}>Minor Damage</option>
+          <option value="Major Damage" ${row.damage === "Major Damage" ? "selected" : ""}>Major Damage</option>
+          <option value="Return Required" ${row.damage === "Return Required" ? "selected" : ""}>Return Required</option>
+        </select>
+      </td>
+
+      <td>
+        <button class="delete-btn" onclick="deleteRow(${realIndex})">Delete</button>
       </td>
     `;
 
@@ -395,201 +497,137 @@ function renderInventory() {
   });
 }
 
-async function refreshData(showToast = false) {
-  try {
-    setConnectionState("neutral", "Loading…");
-    await Promise.all([fetchRacks(), fetchItems()]);
-    setConnectionState("success", "Connected");
-    renderInventory();
-    if (showToast) showMessage("Inventory refreshed from backend.", "success");
-  } catch (error) {
-    console.error(error);
-    setConnectionState("error", "Error");
-    showMessage(`Backend error: ${error.message}`, "error");
+function updateField(index, field, value) {
+  if (!inventory[index]) return;
+
+  if (field === "quantity") {
+    inventory[index][field] = Number(value) || 0;
+  } else {
+    inventory[index][field] = value;
   }
+
+  saveInventory();
+  renderInventory();
 }
 
-async function addRow() {
-  const payload = {
-    item_name: "New Item",
-    project_name: "",
+function addRow() {
+  inventory.push({
+    project: "",
+    itemId: generateItemId(),
+    date: "",
+    item: "",
+    quantity: 1,
+    location: "",
     status: "received",
-    rack_code: null,
-    notes: "",
-    image_url: null
-  };
+    notes: "Ready for install",
+    damage: "No Damage"
+  });
 
-  try {
-    const { error } = await db.from("items").insert(payload);
-    if (error) throw error;
-
-    showMessage("New warehouse item created.", "success");
-    await refreshData();
-  } catch (error) {
-    console.error(error);
-    showMessage(`Could not create item: ${error.message}`, "error");
-  }
+  saveInventory();
+  renderInventory();
 }
 
-async function updateField(itemId, field, value) {
-  try {
-    const payload = { [field]: value === "" ? null : value };
-
-    if (field === "status" && value === "delivered") {
-      payload.rack_code = null;
-    }
-
-    const { error } = await db.from("items").update(payload).eq("id", itemId);
-    if (error) throw error;
-
-    await refreshData();
-
-    if (currentItemId === itemId) {
-      const latest = findItemById(itemId);
-      if (latest) showItemCard(latest);
-    }
-  } catch (error) {
-    console.error(error);
-    showMessage(`Update failed: ${error.message}`, "error");
-  }
+function deleteRow(index) {
+  inventory.splice(index, 1);
+  saveInventory();
+  renderInventory();
 }
 
-async function uploadItemImage(file) {
-  if (!currentItemId) {
-    showMessage("Open an item card first.", "error");
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function updateSearchPlaceholder() {
+  const input = document.getElementById("searchValue");
+  if (!input) return;
+
+  if (searchType === "itemId") {
+    input.placeholder = "Search Item ID (ex: WH000001 or WH000004)";
     return;
   }
 
-  const currentItem = findItemById(currentItemId);
-  if (!currentItem) {
-    showMessage("Item not found.", "error");
+  if (searchType === "rack") {
+    input.placeholder = "Search rack code (ex: 100, 200, 300)";
     return;
   }
 
-  if (!file) return;
-
-  const fileExt = (file.name.split(".").pop() || "jpg").toLowerCase();
-  const safeCode = String(currentItem.item_code || `item-${currentItem.id}`).replace(/[^a-zA-Z0-9-_]/g, "_");
-  const filePath = `${safeCode}/${Date.now()}.${fileExt}`;
-
-  try {
-    showMessage("Uploading image...", "success");
-
-    const { error: uploadError } = await db.storage
-      .from(STORAGE_BUCKET)
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { data: publicData } = db.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(filePath);
-
-    const imageUrl = publicData?.publicUrl || null;
-    if (!imageUrl) throw new Error("Could not generate image URL.");
-
-    const { error: updateError } = await db
-      .from("items")
-      .update({ image_url: imageUrl })
-      .eq("id", currentItemId);
-
-    if (updateError) throw updateError;
-
-    await refreshData();
-
-    const latest = findItemById(currentItemId);
-    if (latest) showItemCard(latest);
-
-    showMessage("Image uploaded successfully.", "success");
-  } catch (error) {
-    console.error(error);
-    showMessage(`Image upload failed: ${error.message}`, "error");
-  }
-}
-
-async function deleteRow(itemId) {
-  const item = findItemById(itemId);
-  const label = item?.item_code || `ID ${itemId}`;
-  const approved = window.confirm(`Delete ${label}?`);
-  if (!approved) return;
-
-  try {
-    const { error } = await db.from("items").delete().eq("id", itemId);
-    if (error) throw error;
-
-    hideItemCard();
-    showMessage(`${label} deleted.`, "success");
-    await refreshData();
-  } catch (error) {
-    console.error(error);
-    showMessage(`Delete failed: ${error.message}`, "error");
-  }
+  input.placeholder = "Search rack location (ex: 200-02A or 300-02A)";
 }
 
 function applyLookupFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const itemCode = params.get("itemCode");
-  const rackCode = params.get("rack");
+  const itemId = params.get("itemId");
+  const location = params.get("location");
+  const rack = params.get("rack");
 
   const searchTypeEl = document.getElementById("searchType");
   const searchValueEl = document.getElementById("searchValue");
 
-  if (itemCode) {
-    searchType = "item_code";
-    searchValue = itemCode;
-  } else if (rackCode) {
-    searchType = "rack_code";
-    searchValue = rackCode;
+  if (itemId) {
+    searchType = "itemId";
+    searchValue = itemId;
+
+    if (searchTypeEl) searchTypeEl.value = "itemId";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = itemId;
+    return;
   }
 
-  if (searchTypeEl) searchTypeEl.value = searchType;
-  updateSearchPlaceholder();
-  if (searchValueEl) searchValueEl.value = searchValue;
+  if (rack) {
+    searchType = "rack";
+    searchValue = rack;
+
+    if (searchTypeEl) searchTypeEl.value = "rack";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = rack;
+    return;
+  }
+
+  if (location) {
+    searchType = "location";
+    searchValue = location;
+
+    if (searchTypeEl) searchTypeEl.value = "location";
+    updateSearchPlaceholder();
+    if (searchValueEl) searchValueEl.value = location;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+function formatDisplayDate(dateValue) {
+  if (!dateValue) return "";
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   const addRowBtn = document.getElementById("addRowBtn");
-  const refreshBtn = document.getElementById("refreshBtn");
-  const closeItemCardBtn = document.getElementById("closeItemCardBtn");
+  const resetBtn = document.getElementById("resetBtn");
   const searchTypeEl = document.getElementById("searchType");
   const searchValueEl = document.getElementById("searchValue");
   const closeRackModalBtn = document.getElementById("closeRackModalBtn");
   const rackModalBackdrop = document.getElementById("rackModalBackdrop");
-  const uploadImageBtn = document.getElementById("uploadImageBtn");
-  const replaceImageBtn = document.getElementById("replaceImageBtn");
-  const detailImageInput = document.getElementById("detailImageInput");
 
-  applyLookupFromUrl();
-  updateSearchPlaceholder();
-
-  if (addRowBtn) addRowBtn.addEventListener("click", addRow);
-  if (refreshBtn) refreshBtn.addEventListener("click", () => refreshData(true));
-  if (closeItemCardBtn) closeItemCardBtn.addEventListener("click", hideItemCard);
-
-  if (uploadImageBtn && detailImageInput) {
-    uploadImageBtn.addEventListener("click", () => detailImageInput.click());
+  if (addRowBtn) {
+    addRowBtn.addEventListener("click", addRow);
   }
 
-  if (replaceImageBtn && detailImageInput) {
-    replaceImageBtn.addEventListener("click", () => detailImageInput.click());
-  }
-
-  if (detailImageInput) {
-    detailImageInput.addEventListener("change", async (event) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        await uploadItemImage(file);
-      }
-      event.target.value = "";
-    });
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetInventory);
   }
 
   if (searchTypeEl) {
     searchTypeEl.addEventListener("change", (event) => {
-      searchType = event.target.value || "rack_code";
+      searchType = event.target.value || "location";
       updateSearchPlaceholder();
       renderInventory();
     });
@@ -602,13 +640,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  if (closeRackModalBtn) closeRackModalBtn.addEventListener("click", closeRackModal);
-  if (rackModalBackdrop) rackModalBackdrop.addEventListener("click", closeRackModal);
+  if (closeRackModalBtn) {
+    closeRackModalBtn.addEventListener("click", closeRackModal);
+  }
 
-  await refreshData();
+  if (rackModalBackdrop) {
+    rackModalBackdrop.addEventListener("click", closeRackModal);
+  }
+
+  updateSearchPlaceholder();
+  applyLookupFromUrl();
+  renderInventory();
 });
 
-window.openItemCardById = openItemCardById;
+window.openItemCardByIndex = openItemCardByIndex;
 window.closeRackModal = closeRackModal;
-window.updateField = updateField;
-window.deleteRow = deleteRow;
