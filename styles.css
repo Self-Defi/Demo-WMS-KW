@@ -65,6 +65,34 @@ p {
   max-width: 900px;
 }
 
+/* Preview Mode Notice */
+
+.preview-notice {
+  margin-top: 28px;
+  margin-bottom: 10px;
+}
+
+.preview-notice-card {
+  background: #fcf7f2;
+  border: 1px solid #e6d6c6;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(35, 22, 15, 0.06);
+}
+
+.preview-notice-card h2 {
+  font-size: 1.1rem;
+  margin: 0 0 6px;
+  color: var(--kw-brown-dark);
+}
+
+.preview-notice-card p {
+  font-size: 0.95rem;
+  color: var(--kw-brown);
+  line-height: 1.5;
+  max-width: none;
+}
+
 .section-head {
   margin-top: 52px;
   margin-bottom: 18px;
