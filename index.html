@@ -11,17 +11,27 @@
     <div class="container">
       <h1>Warehouse Inventory System</h1>
       <p>
-        Proof-of-concept inventory system showing intake, rack locations,
+        Controlled preview of a working inventory system showing intake, rack locations,
         procurement visibility, and QR-based lookup.
       </p>
     </div>
   </header>
 
   <main class="container">
+    <section class="preview-notice" aria-label="Preview mode notice">
+      <div class="preview-notice-card">
+        <h2>Preview Mode</h2>
+        <p>
+          This live preview is designed to demonstrate workflow structure and item tracking.
+          Sensitive project data, including actual inventory photos, is intentionally not provided in Preview mode.
+        </p>
+      </div>
+    </section>
+
     <section class="section-head">
       <h2>Inventory Intake Log</h2>
       <div class="button-group">
-        <button id="resetBtn" class="reset-btn" type="button">Reset Demo Data</button>
+        <button id="resetBtn" class="reset-btn" type="button">Reset Preview Data</button>
         <button id="addRowBtn" class="add-btn" type="button">+ Add Item</button>
       </div>
     </section>
@@ -55,7 +65,7 @@
         <div class="item-card-image">
           <div class="image-placeholder">
             <span>Item Image</span>
-            <small>Photo coming soon</small>
+            <small>Intentionally not provided in Preview mode</small>
           </div>
         </div>
 
